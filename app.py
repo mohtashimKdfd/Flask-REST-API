@@ -1,4 +1,4 @@
-import bcrypt
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow #marshmallow is a library for serialization/deserialization of data
@@ -41,12 +41,12 @@ users_schema = UserSchema(many=True)
 
 
 #hashing password
-def password_hashing(password):
-    return bcrypt.hashpw(password.encode('utf-8'),bcrypt.gensalt())
+# def password_hashing(password):
+#     return bcrypt.hashpw(password.encode('utf-8'),bcrypt.gensalt())
 
-def check_password(password,hashed_password):
-    hashed = bcrypt.hashpw(hashed_password.encode('utf-8'),bcrypt.gensalt())
-    return bcrypt.checkpw(password.encode('utf8'), hashed)
+# def check_password(password,hashed_password):
+#     hashed = bcrypt.hashpw(hashed_password.encode('utf-8'),bcrypt.gensalt())
+#     return bcrypt.checkpw(password.encode('utf8'), hashed)
     
 
 @app.route('/',methods=['GET'])
@@ -60,7 +60,7 @@ def signup():
         username = request.json['username']
         password = request.json['password']
         email = request.json['email']
-        hashed_password = password_hashing(password)
+        hashed_password = generate_password_hash(password)
         newUser = User(username=username,password=hashed_password,email=email)
         try:
             db.session.add(newUser)
@@ -70,19 +70,19 @@ def signup():
             print(e)
             return jsonify({'msg':'Error in creating new user'})
 
-# @app.route('/login',methods=['POST'])
-# def login():
-#     if request.method=='POST':
-#         username = request.json['username']
-#         password = request.json['password']
-#         if User.query.filter_by(username=username).count():
-#             targetUser = User.query.filter_by(username=username).first()
-#             if check_password(password,targetUser.password):
-#                 return jsonify({'msg':'User Logged in'})
-#             else:
-#                 return jsonify({'msg':'Wrong password'})
-#         else:
-#             return jsonify({'msg':'User not registered'})
+@app.route('/login',methods=['POST'])
+def login():
+    if request.method=='POST':
+        username = request.json['username']
+        password = request.json['password']
+        if User.query.filter_by(username=username).count():
+            targetUser = User.query.filter_by(username=username).first()
+            if check_password_hash(targetUser.password,password):
+                return jsonify({'msg':'User Logged in'})
+            else:
+                return jsonify({'msg':'Wrong password'})
+        else:
+            return jsonify({'msg':'User not registered'})
 
 
 @app.route('/allusers',methods=['GET'])
