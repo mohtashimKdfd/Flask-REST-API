@@ -1,53 +1,8 @@
+from flask import Blueprint, jsonify, request
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import Flask, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_marshmallow import Marshmallow #marshmallow is a library for serialization/deserialization of data
-import os
+from src.models import User, user_schema, users_schema, db 
 
-#Initiliasing app
-app = Flask(__name__)
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS']=False
-app.config['SQLALCHEMY_DATABASE_URI'] ='postgresql://mohtashimkamran:kamran@127.0.0.1/test.db'
-
-# init db
-db = SQLAlchemy(app)
-# init marshmallow
-marsh = Marshmallow(app)
-
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String,nullable=False, unique=True)
-    email = db.Column(db.String,nullable=False)
-    password = db.Column(db.String,nullable=False)
-
-    # def __repr__(self):
-        # return self.username
-    def __init__(self,username,email,password):
-        # self.id=id 
-        self.username = username
-        self.email = email
-        self.password = password
-        
-
-class UserSchema(marsh.Schema):
-    class Meta:
-        fields = ('id', 'username', 'email', 'password')
-
-#Initiliasing Schema
-
-user_schema = UserSchema()
-
-users_schema = UserSchema(many=True)
-
-
-#hashing password
-# def password_hashing(password):
-#     return bcrypt.hashpw(password.encode('utf-8'),bcrypt.gensalt())
-
-# def check_password(password,hashed_password):
-#     hashed = bcrypt.hashpw(hashed_password.encode('utf-8'),bcrypt.gensalt())
-#     return bcrypt.checkpw(password.encode('utf8'), hashed)
-    
+app = Blueprint("app",__name__)
 
 @app.route('/',methods=['GET'])
 def index():
@@ -98,6 +53,3 @@ def delete(id):
     db.session.delete(targetUser)
     db.session.commit()
     return jsonify({'msg':'User deleted'})
-
-if __name__ == '__main__':
-    app.run(debug=True)
