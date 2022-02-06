@@ -1,17 +1,26 @@
 from flask import Blueprint, jsonify, request
 from werkzeug.security import generate_password_hash, check_password_hash
 from src.models import User, user_schema, users_schema, db 
-
+from http import HTTPStatus
+from flask_restful import Resource, Api
 app = Blueprint("app",__name__)
+api = Api(app)
 
-@app.route('/',methods=['GET'])
-def index():
-    return jsonify({'msg':'Hellooooooo'})
+# @app.route('/',methods=['GET'])
+# def index():
+#     return jsonify({'msg':'Hellooooooo'})
+
+class Home(Resource):
+    def get(self):
+        return "HelloBhai"
+api.add_resource(Home,'/')
 
 #creating user 
-@app.route('/signup',methods=['POST'])
-def signup():
-    if request.method == 'POST':
+# @app.route('/signup',methods=['POST'])
+# def signup():
+class Signup(Resource):
+    def POST(self):
+        # if request.method == 'POST':
         username = request.json['username']
         password = request.json['password']
         email = request.json['email']
@@ -23,22 +32,25 @@ def signup():
             return user_schema.jsonify(newUser)
         except Exception as e:
             print(e)
-            return jsonify({'msg':'Error in creating new user'})
+            return jsonify({'msg':'Error in creating new user'}) , HTTPStatus.BAD_REQUEST
 
-@app.route('/login',methods=['POST'])
-def login():
-    if request.method=='POST':
+# @app.route('/login',methods=['POST'])
+class Login(Resource):
+    def post(self):
+        # if request.method=='POST':
         username = request.json['username']
         password = request.json['password']
         if User.query.filter_by(username=username).count():
             targetUser = User.query.filter_by(username=username).first()
             if check_password_hash(targetUser.password,password):
-                return jsonify({'msg':'User Logged in'})
+                return {'msg':'User Logged in'} ,HTTPStatus.OK
             else:
-                return jsonify({'msg':'Wrong password'})
+                return {'msg':'Wrong password'}
         else:
-            return jsonify({'msg':'User not registered'})
+            return {'msg':'User not registered'}
 
+api.add_resource(Signup,'/signup')
+api.add_resource(Login, '/login')
 
 @app.route('/allusers',methods=['GET'])
 def getusers():
